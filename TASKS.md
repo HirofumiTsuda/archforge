@@ -127,7 +127,7 @@
 
 **残り**:
 - [ ] `cli.py`（argparse、3サブコマンド）。起動は`uv run python -m archforge <cmd>`（console_scriptsのインストールは今はしない）（`generate`サブコマンドのみ、ストーリー1の保存タスクの一環で最小実装済み。`practice`/`stats`はまだ）
-- [ ] `README.md`（セットアップ・実行手順: `uv sync`→`uv run python -m archforge ...`、`uv run ruff check .`等）
+- [x] `README.md`（セットアップ・実行手順、DESIGN.mdの「非公式・AI生成」免責事項込み。リポジトリが2026-08-30にPublic化されたため、公開前提の記載を先に入れた）
 
 ## ストーリー10: パラメーター（モデルなど）を変更できる
 状態: 🔲 未着手
