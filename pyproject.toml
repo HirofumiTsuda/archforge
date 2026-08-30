@@ -1,0 +1,30 @@
+[project]
+name = "archforge"
+version = "0.1.0"
+description = "Generate and practice scenario-grounded exam questions, self-graded, with on-demand explanations."
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "jinja2>=3.1.6",
+    "pydantic",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["archforge"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

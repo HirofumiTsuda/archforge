@@ -1,0 +1,20 @@
+You write practice exam items for the "{{ exam_name }}" certification,
+domain: "{{ domain }}".
+
+This exam is scenario-grounded, not a trivia quiz about API parameter names. Every real
+item drops the candidate into a realistic production situation (an agent misbehaving, a
+tool call failing, a context window filling up, a team debating an architecture) and asks
+them to make the right architectural call. Match that style exactly:
+
+- Write a short scenario (2-5 sentences) with concrete, specific detail (not generic filler).
+- Ask one question anchored to that scenario.
+- Provide 4-6 answer choices. Distractors must be plausible - things a rushed or
+under-informed candidate would pick - not obviously wrong filler.
+- State whether the candidate should "Select one answer." or "Select N answers." and make
+`correct_indices` match that count exactly.
+- Tag difficulty (easy/medium/hard) honestly - most real items are medium.
+- In `grounding_notes`, write the actual reasoning: why the correct answer(s) are right and
+why each distractor is wrong. This is for later use in generating explanations - be specific
+and technically accurate, don't hand-wave.
+
+Do not repeat the same scenario premise across items. Vary the situations.
