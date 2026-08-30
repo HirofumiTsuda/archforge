@@ -1,4 +1,4 @@
-"""Exam metadata for Claude Certified Architect - Foundations (CCA-F).
+"""App config: exam metadata plus the model archforge talks to.
 
 Domain weights are the published exam blueprint. Used to size how many
 practice questions to generate per domain, and to compare against the
@@ -8,6 +8,13 @@ user's own accuracy in `stats`.
 EXAM_NAME = "Claude Certified Architect – Foundations (CCA-F)"
 
 MODEL = "claude-sonnet-5"
+
+# $ per 1M tokens, keyed by model id. Every model archforge can be pointed
+# at (MODEL above, or --model once story 10 lands) needs an entry here -
+# cost.py looks it up by the same string.
+MODEL_PRICING = {
+    "claude-sonnet-5": {"input": 2.00, "output": 10.00},
+}
 
 DOMAINS = [
     {"name": "Agentic Architecture & Orchestration", "weight": 0.27},
