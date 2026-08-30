@@ -49,31 +49,59 @@ def _counts_per_domain(total: int) -> list[int]:
     return counts
 
 
+MAX_PAUSE_TURN_CONTINUATIONS = 5
+
+
 async def _generate_domain_batch(
     client: anthropic.AsyncAnthropic, exam_name: str, domain: str, count: int, model: str
 ) -> DomainBatch:
-    response = await client.messages.create(
-        model=model,
-        max_tokens=16000,
-        system=get_domain_system_prompt(exam_name=exam_name, domain=domain),
-        messages=[{"role": "user", "content": f"Write {count} items for this domain."}],
-        tools=[
-            {
-                "type": "web_search_20260209",
-                "name": "web_search",
-                "allowed_domains": [
-                    "docs.claude.com",
-                    "claude.com",
-                    "anthropic.skilljar.com",
-                    "anthropic-partners.skilljar.com",
-                ],
-            }
-        ],
-        output_config={
-            "format": {"type": "json_schema", "schema": DomainBatch.model_json_schema()},
-            "effort": "low",
-        },
-    )
+    user_message = f"Write {count} items for this domain."
+    system = get_domain_system_prompt(exam_name=exam_name, domain=domain)
+    tools = [
+        {
+            "type": "web_search_20260209",
+            "name": "web_search",
+            "allowed_domains": [
+                "docs.claude.com",
+                "claude.com",
+                "anthropic.skilljar.com",
+                "anthropic-partners.skilljar.com",
+            ],
+        }
+    ]
+    output_config = {
+        "format": {"type": "json_schema", "schema": DomainBatch.model_json_schema()},
+        "effort": "low",
+    }
+
+    # web_search runs a server-side loop that can stop early (default limit:
+    # 10 iterations) with stop_reason "pause_turn". Resume by re-sending the
+    # conversation so far - the API sees the trailing server_tool_use block
+    # and continues where it left off (no "Continue." message needed).
+    messages: list[dict[str, Any]] = [{"role": "user", "content": user_message}]
+    attempt = 0
+    while True:
+        response = await client.messages.create(
+            model=model,
+            max_tokens=16000,
+            system=system,
+            messages=messages,
+            tools=tools,
+            output_config=output_config,
+        )
+        if response.stop_reason != "pause_turn":
+            break
+        attempt += 1
+        if attempt > MAX_PAUSE_TURN_CONTINUATIONS:
+            raise RuntimeError(
+                f"web_search for domain {domain!r} did not finish after "
+                f"{MAX_PAUSE_TURN_CONTINUATIONS} pause_turn continuations"
+            )
+        messages = [
+            {"role": "user", "content": user_message},
+            {"role": "assistant", "content": response.content},
+        ]
+
     text = next(b.text for b in reversed(response.content) if b.type == "text")
     return DomainBatch.model_validate_json(text)
 
