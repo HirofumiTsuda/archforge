@@ -52,15 +52,30 @@ def _counts_per_domain(total: int) -> list[int]:
 async def _generate_domain_batch(
     client: anthropic.AsyncAnthropic, exam_name: str, domain: str, count: int, model: str
 ) -> DomainBatch:
-    response = await client.messages.parse(
+    response = await client.messages.create(
         model=model,
         max_tokens=16000,
         system=get_domain_system_prompt(exam_name=exam_name, domain=domain),
         messages=[{"role": "user", "content": f"Write {count} items for this domain."}],
-        output_format=DomainBatch,
-        output_config={"effort": "low"},
+        tools=[
+            {
+                "type": "web_search_20260209",
+                "name": "web_search",
+                "allowed_domains": [
+                    "docs.claude.com",
+                    "claude.com",
+                    "anthropic.skilljar.com",
+                    "anthropic-partners.skilljar.com",
+                ],
+            }
+        ],
+        output_config={
+            "format": {"type": "json_schema", "schema": DomainBatch.model_json_schema()},
+            "effort": "low",
+        },
     )
-    return response.parsed_output
+    text = next(b.text for b in reversed(response.content) if b.type == "text")
+    return DomainBatch.model_validate_json(text)
 
 
 async def _review(

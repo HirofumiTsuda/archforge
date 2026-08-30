@@ -26,15 +26,18 @@
 - [x] generate結果を`bank.add_questions`に渡す処理（`cli.py`の`generate`サブコマンドとして配線。ストーリー9「コマンドとして使える」の`cli.py`本体はまだ`generate`のみの最小実装で、`practice`/`stats`は未着手）
 
 ## ストーリー2: 生成した問題が公式ドキュメントに基づいた根拠を持つ
-状態: 🔲 未着手
+状態: ✅ 完了（2026-08-30、実際にweb_searchが発火し`grounding_notes`が検索結果を根拠にしていることを確認済み）
 
 **目的**: web_search（公式ドメイン限定）で公式ドキュメントを参照しながら出題することで、設問と`grounding_notes`の正確性を上げる。`grounding_notes`はストーリー8（解説）がハルシネーションせず解説するための根拠になる
 
 **DoD**: 生成エージェントがweb_searchツールで公式ドキュメントを参照し、その根拠に基づいた設問（と`grounding_notes`）が生成される
 
-- [ ] `_generate_domain_batch`を`.messages.parse()`から`.messages.create()`に書き換え
-- [ ] `tools=[web_search_20260209]`を追加、`allowed_domains`を公式ソースのみに限定（docs.claude.com / claude.com / anthropic.skilljar.com / anthropic-partners.skilljar.com）
-- [ ] `output_config.format`（生JSON schema）で構造化出力を確定させる
+- [x] `_generate_domain_batch`を`.messages.parse()`から`.messages.create()`に書き換え
+- [x] `tools=[web_search_20260209]`を追加、`allowed_domains`を公式ソースのみに限定（docs.claude.com / claude.com / anthropic.skilljar.com / anthropic-partners.skilljar.com）
+- [x] `output_config.format`（生JSON schema）で構造化出力を確定させる
+- [x] `domain_agent_system_prompt.jinja`にweb_search使用の指示を追加（`tools`に渡すだけではモデルが自発的に検索しなかったため。Anthropic公式の推奨〈プロンプト側でトリガー条件を明示する〉に沿って対応）
+
+**既知の制限（2026-08-30、一旦保留）**: 実機確認で、`generate --count 5`実行時に5ドメイン中1ドメイン（Context Management & Reliability）が`questions: []`（0問）を返すことがあった。エラーは出ておらず、`_counts_per_domain`は各ドメインに最低1問を割り当てているので、モデルが「グラウンディングに足る材料が見つからなかった」と判断して意図的に空を返した可能性が高い。原因の深掘り・対処（該当ドメインだけ再試行する、など）は未着手。再発するようなら着手する。
 
 ## ストーリー3: 繰り返し実行してもコストが抑えられる
 状態: 🔲 未着手

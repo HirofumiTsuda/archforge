@@ -1,9 +1,14 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GeneratedQuestion(BaseModel):
+    # extra="forbid" so model_json_schema() emits additionalProperties: false,
+    # required for the raw output_config.format path (story 2's web_search
+    # generation can't use client.messages.parse() alongside server tools).
+    model_config = ConfigDict(extra="forbid")
+
     scenario: str = Field(description="A realistic production situation, 2-5 sentences.")
     question: str = Field(
         description="The architectural decision being asked, anchored to the scenario."
@@ -24,6 +29,8 @@ class GeneratedQuestion(BaseModel):
 
 
 class DomainBatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     domain: str
     questions: list[GeneratedQuestion]
 
@@ -33,6 +40,8 @@ class ReviewedQuestion(GeneratedQuestion):
 
 
 class ReviewedBatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     questions: list[ReviewedQuestion]
     dropped_count: int = Field(
         description="How many raw candidates were dropped as duplicate/ambiguous/malformed."
