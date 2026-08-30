@@ -1,7 +1,7 @@
 """CLI entry point.
 
-Only `generate` is wired up so far. `practice`/`stats` land with story 7
-(practice) and story 11 (stats) — see TASKS.md.
+`generate` and `practice` are wired up. `stats` lands with story 11 — see
+TASKS.md.
 """
 
 import argparse
@@ -11,6 +11,7 @@ from archforge.bank import Bank
 from archforge.config import BANK_PATH, EXAM_NAME, MODEL
 from archforge.cost import summarize_cost
 from archforge.generate import generate_batch
+from archforge.practice import run_practice
 
 
 async def _generate(count: int, model: str) -> None:
@@ -44,10 +45,19 @@ def main() -> None:
     generate_parser.add_argument("--count", type=int, default=15)
     generate_parser.add_argument("--model", default=MODEL)
 
+    practice_parser = subparsers.add_parser("practice", help="Practice unattempted questions.")
+    practice_parser.add_argument("--domain", default=None, help="Restrict to one exam domain.")
+    practice_parser.add_argument(
+        "--count", type=int, default=None, help="How many questions to answer (default: all)."
+    )
+
     args = parser.parse_args()
 
     if args.command == "generate":
         asyncio.run(_generate(args.count, args.model))
+    elif args.command == "practice":
+        bank = Bank(bank_path=BANK_PATH)
+        run_practice(bank, args.domain, args.count)
 
 
 if __name__ == "__main__":

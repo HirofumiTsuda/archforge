@@ -24,8 +24,8 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 ## Usage
 
-Only `generate` is wired up so far (`practice`/`stats` are on the roadmap —
-see `TASKS.md`).
+`generate` and `practice` are wired up (`stats` is on the roadmap — see
+`TASKS.md`).
 
 ```bash
 # Generate 15 questions (default), weighted across the 5 exam domains
@@ -43,6 +43,20 @@ per exam domain, plus one review pass), and each domain agent can call
 `web_search` to ground its questions in the official docs. A `--count 5` run
 has cost well under $1 in testing, but costs scale with `--count` and with
 how much a given run ends up searching.
+
+```bash
+# Answer every unattempted question
+uv run python -m archforge practice
+
+# Answer just 5, from one domain
+uv run python -m archforge practice --count 5 --domain "Tool Design & MCP Integration"
+```
+
+`practice` grades locally — no API calls, no cost. Answer with a letter
+("A") or letters ("A,C") for multi-select questions, or `Q` to stop the
+session early (what you've already answered stays recorded). It tells you
+Correct/Incorrect immediately (on-demand explanations land with story 8) and
+records the attempt so the question won't come up again.
 
 ## Development
 
