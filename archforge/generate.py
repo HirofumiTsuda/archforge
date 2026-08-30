@@ -74,32 +74,13 @@ async def _generate_domain_batch(
         "effort": "low",
     }
 
-    messages: list[dict[str, Any]] = [{"role": "user", "content": user_message}]
-    response = await client.messages.create(
-        model=model,
-        max_tokens=16000,
-        system=system,
-        messages=messages,
-        tools=tools,
-        output_config=output_config,
-    )
-
     # web_search runs a server-side loop that can stop early (default limit:
     # 10 iterations) with stop_reason "pause_turn". Resume by re-sending the
     # conversation so far - the API sees the trailing server_tool_use block
     # and continues where it left off (no "Continue." message needed).
-    continuations = 0
-    while response.stop_reason == "pause_turn":
-        continuations += 1
-        if continuations > MAX_PAUSE_TURN_CONTINUATIONS:
-            raise RuntimeError(
-                f"web_search for domain {domain!r} did not finish after "
-                f"{MAX_PAUSE_TURN_CONTINUATIONS} pause_turn continuations"
-            )
-        messages = [
-            {"role": "user", "content": user_message},
-            {"role": "assistant", "content": response.content},
-        ]
+    messages: list[dict[str, Any]] = [{"role": "user", "content": user_message}]
+    attempt = 0
+    while True:
         response = await client.messages.create(
             model=model,
             max_tokens=16000,
@@ -108,6 +89,18 @@ async def _generate_domain_batch(
             tools=tools,
             output_config=output_config,
         )
+        if response.stop_reason != "pause_turn":
+            break
+        attempt += 1
+        if attempt > MAX_PAUSE_TURN_CONTINUATIONS:
+            raise RuntimeError(
+                f"web_search for domain {domain!r} did not finish after "
+                f"{MAX_PAUSE_TURN_CONTINUATIONS} pause_turn continuations"
+            )
+        messages = [
+            {"role": "user", "content": user_message},
+            {"role": "assistant", "content": response.content},
+        ]
 
     text = next(b.text for b in reversed(response.content) if b.type == "text")
     return DomainBatch.model_validate_json(text)
