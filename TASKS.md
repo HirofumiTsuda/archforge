@@ -43,7 +43,7 @@
 - [x] `_generate_domain_batch`で`response.stop_reason == "pause_turn"`を検知し、`messages`に`response.content`を積んで`.messages.create()`を再送する処理を追加（上限`MAX_PAUSE_TURN_CONTINUATIONS = 5`回。実際に`pause_turn`が発生するケースは未確認だが、コードパスとしては対応済み）
 
 ## ストーリー3: 繰り返し実行してもコストが抑えられる
-状態: 🔲 未着手
+状態: 🔲 未着手（2026-08-30、ストーリー6のコスト可視化を先にやる判断。TTL〈5分 or 1時間〉は実測コストが見えないと決めようがないため、着手を後回しにした）
 
 **目的**: 個人の勉強用に何度も`generate`を回す想定なので、プロンプトキャッシュで繰り返し実行時のコストを抑える（効果はストーリー6のコスト表示で確認できる）
 
@@ -76,15 +76,17 @@
 - [x] `_generate_domain_batch`を5ドメイン分`asyncio.gather`で並列実行し、まとめて自動生成する（`generate.py`実装済み）
 
 ## ストーリー6: 1回のgenerate実行にかかったコストを見ることができる
-状態: 🔲 未着手
+状態: 🔶 かなり実装済み（表示は完了。web_search導入後のコスト急増への対処は未解決のまま保留）
 
 **目的**: token/cost最適化を「測っただけ」で終わらせない。generate実行後にコストが見える（キャッシュ効果〈ストーリー3〉が入っていれば、その内訳も表示に反映される）
 
 **DoD**: `generate`を実行すると、ターミナルにコスト（input/output/cache_read/cache_creation別の内訳、キャッシュ効果込み）のサマリーが表示される
 
-- [ ] usage集計 + コスト計算のヘルパー関数
-- [ ] コストサマリーの表示フォーマット決定・実装（input/output/cache_read/cache_creation別の内訳）
+- [x] usage集計 + コスト計算のヘルパー関数（`cost.py`の`summarize_cost`、`test_cost.py`でテスト済み）
+- [x] コストサマリーの表示フォーマット決定・実装（`cli.py`の`generate`実行後にinput/output/cache_read/cache_creation別の内訳を表示）
 - [ ] コストモニタリングが揃った状態で、`_generate_domain_batch`/`_review`の`output_config.effort`を最終決定する（2026-08-30の手動比較では、`low`は`grounding_notes`の説明が薄くなり誤答の質も下がる劣化が確認済み・非推奨。`high`→`medium`→`low`で$0.17→$0.12→$0.06。開発中は`low`のまま進めるが、開発が一段落してコスト可視化ができてから、実測コストと品質を見て`medium`以上を軸に最終値を決める）
+
+**既知の問題（2026-08-30、一旦保留）**: ストーリー2（web_search導入）後、コストが$0.06〜$0.17のレンジから**$0.39〜$0.42**へ急増した。内訳を見ると`input_tokens`が15万トークン超と突出しており、`output_tokens`（1万程度）とは桁違い。`web_search`の`max_uses: 3`（1ドメインあたりの検索回数上限）を入れてみたが、コストはほぼ変化なし（$0.3918→$0.4158）。これは「検索回数」自体が原因ではなく、**1回の検索・dynamic filtering処理あたりの内容量そのものが大きい**ことを示唆している。原因の特定（1ドメイン単体でusageの内訳を見る、など）は未着手。次に着手する時はここから。
 
 ## ストーリー7: 問題を解いて、その場で正誤がわかる
 状態: 🔲 未着手

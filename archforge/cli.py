@@ -9,6 +9,7 @@ import asyncio
 
 from archforge.bank import Bank
 from archforge.config import BANK_PATH, EXAM_NAME, MODEL
+from archforge.cost import summarize_cost
 from archforge.generate import generate_batch
 
 
@@ -26,6 +27,13 @@ async def _generate(count: int, model: str) -> None:
         f"Bank now has {len(updated)} questions."
     )
     print(f"Review notes: {result['review_notes']}")
+
+    cost = summarize_cost(result["domain_usages"], result["review_usage"], model)
+    print(f"Cost: ${cost.cost_usd:.4f}")
+    print(f"  input:          {cost.input_tokens:>8,} tokens")
+    print(f"  output:         {cost.output_tokens:>8,} tokens")
+    print(f"  cache_read:     {cost.cache_read_input_tokens:>8,} tokens")
+    print(f"  cache_creation: {cost.cache_creation_input_tokens:>8,} tokens")
 
 
 def main() -> None:
