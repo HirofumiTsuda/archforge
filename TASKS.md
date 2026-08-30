@@ -39,6 +39,9 @@
 
 **既知の制限（2026-08-30、一旦保留）**: 実機確認で、`generate --count 5`実行時に5ドメイン中1ドメイン（Context Management & Reliability）が`questions: []`（0問）を返すことがあった。エラーは出ておらず、`_counts_per_domain`は各ドメインに最低1問を割り当てているので、モデルが「グラウンディングに足る材料が見つからなかった」と判断して意図的に空を返した可能性が高い。原因の深掘り・対処（該当ドメインだけ再試行する、など）は未着手。再発するようなら着手する。
 
+**追加タスク（未着手）**: `web_search`はサーバー側で最大10回ループすると`stop_reason: "pause_turn"`で打ち切られる仕様がある（ドキュメント記載）。今の`_generate_domain_batch`はこれを一切ハンドリングしておらず、検索回数が多いドメインでは`text`ブロックが見つからず`StopIteration`で落ちる可能性がある。実機テストでは発生していないが未検証。
+- [ ] `_generate_domain_batch`で`response.stop_reason == "pause_turn"`を検知し、`messages`に`response.content`を積んで`.messages.create()`を再送し、続きを取得する処理を追加する
+
 ## ストーリー3: 繰り返し実行してもコストが抑えられる
 状態: 🔲 未着手
 
